@@ -1,10 +1,491 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>我的第一个Netlify网站</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 管理员三重验证</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 450px;
+        }
+        
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #64748b;
+            z-index: 2;
+        }
+        
+        .step.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+        }
+        
+        .step.completed {
+            background: #10b981;
+            color: white;
+        }
+        
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .step-content {
+            display: none;
+        }
+        
+        .step-content.active {
+            display: block;
+        }
+        
+        h2 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #334155;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px 0;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        .attempts-left {
+            font-size: 13px;
+            color: #ef4444;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
+        .animal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .animal-item {
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        
+        .animal-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .animal-item.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .google-box {
+            text-align: center;
+            padding: 30px;
+            background: #f8fafc;
+            border-radius: 16px;
+            margin: 20px 0;
+        }
+        
+        .google-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello World!</h1>
-    <p>这是我的网站首页。</p>
+    <div class="container">
+        <div class="login-box">
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">1</div>
+                <div class="step" id="step2">2</div>
+                <div class="step" id="step3">3</div>
+                <div class="progress-line">
+                    <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                </div>
+            </div>
+            
+            <!-- 第一关：密码验证 -->
+            <div id="step1Content" class="step-content active">
+                <h2>🔑 第一关：密码验证</h2>
+                <div class="subtitle">请输入40位超级管理员密码</div>
+                
+                <div class="input-group">
+                    <label>密码</label>
+                    <input type="password" id="password" placeholder="输入密码" autofocus>
+                </div>
+                
+                <button onclick="verifyStep1()" id="step1Btn">验证密码</button>
+                
+                <div id="step1Message" class="message"></div>
+                <div id="attemptsInfo" class="attempts-left"></div>
+            </div>
+            
+            <!-- 第二关：邮箱验证 -->
+            <div id="step2Content" class="step-content">
+                <h2>📧 第二关：邮箱验证</h2>
+                <div class="subtitle">验证管理员邮箱</div>
+                
+                <div class="google-box">
+                    <svg class="google-icon" viewBox="0 0 48 48">
+                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                    </svg>
+                    <h3 style="margin-bottom: 10px;">登录你的Google账号</h3>
+                    <p style="color: #64748b; margin-bottom: 20px;">只有指定邮箱可以登录</p>
+                    <input type="email" id="email" value="1l08kwokpohua@gmail.com" readonly style="background: #f1f5f9; text-align: center;">
+                </div>
+                
+                <button onclick="verifyStep2()">验证邮箱</button>
+                <div id="step2Message" class="message"></div>
+            </div>
+            
+            <!-- 第三关：动物选择 -->
+            <div id="step3Content" class="step-content">
+                <h2>🐾 第三关：动物选择</h2>
+                <div class="subtitle">选择你最喜欢的动物</div>
+                
+                <div class="animal-grid" id="animalGrid">
+                    <div class="animal-item" onclick="selectAnimal('dog')">🐶 小狗</div>
+                    <div class="animal-item" onclick="selectAnimal('cat')">🐱 小猫</div>
+                    <div class="animal-item" onclick="selectAnimal('rabbit')">🐰 兔子</div>
+                    <div class="animal-item" onclick="selectAnimal('panda')">🐼 熊猫</div>
+                    <div class="animal-item" onclick="selectAnimal('lion')">🦁 狮子</div>
+                    <div class="animal-item" onclick="selectAnimal('tiger')">🐯 老虎</div>
+                    <div class="animal-item" onclick="selectAnimal('elephant')">🐘 大象</div>
+                    <div class="animal-item" onclick="selectAnimal('giraffe')">🦒 长颈鹿</div>
+                    <div class="animal-item" onclick="selectAnimal('monkey')">🐒 猴子</div>
+                    <div class="animal-item" onclick="selectAnimal('penguin')">🐧 企鹅</div>
+                </div>
+                
+                <button onclick="verifyStep3()" id="step3Btn" disabled>完成验证</button>
+                <div id="step3Message" class="message"></div>
+            </div>
+            
+            <!-- 加载动画 -->
+            <div id="loading" style="display: none; text-align: center; padding: 40px;">
+                <div style="border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                <p style="margin-top: 15px; color: #64748b;">验证中...</p>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <script>
+        let currentStep = 1;
+        let selectedAnimal = '';
+        let adminToken = '';
+        
+        // 第一关验证
+        async function verifyStep1() {
+            const password = document.getElementById('password').value;
+            
+            if (!password) {
+                showMessage('step1Message', '请输入密码', 'error');
+                return;
+            }
+            
+            document.getElementById('step1Btn').disabled = true;
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/admin/step1', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                hideLoading();
+                
+                if (data.success) {
+                    showMessage('step1Message', '✅ 密码正确！', 'success');
+                    setTimeout(() => {
+                        goToStep2();
+                    }, 1000);
+                } else {
+                    document.getElementById('step1Btn').disabled = false;
+                    
+                    if (data.blocked) {
+                        showMessage('step1Message', `⛔ ${data.error}`, 'error');
+                        document.getElementById('step1Btn').disabled = true;
+                    } else {
+                        showMessage('step1Message', `❌ ${data.error}`, 'error');
+                        document.getElementById('attemptsInfo').textContent = `还剩 ${data.attemptsLeft} 次机会`;
+                    }
+                }
+            } catch (error) {
+                hideLoading();
+                showMessage('step1Message', '❌ 网络错误', 'error');
+                document.getElementById('step1Btn').disabled = false;
+            }
+        }
+        
+        // 第二关验证
+        async function verifyStep2() {
+            const email = document.getElementById('email').value;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/admin/step2', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                hideLoading();
+                
+                if (data.success) {
+                    showMessage('step2Message', '✅ 邮箱验证成功！', 'success');
+                    setTimeout(() => {
+                        goToStep3();
+                    }, 1000);
+                } else {
+                    showMessage('step2Message', `❌ ${data.error}`, 'error');
+                }
+            } catch (error) {
+                hideLoading();
+                showMessage('step2Message', '❌ 网络错误', 'error');
+            }
+        }
+        
+        // 选择动物
+        function selectAnimal(animal) {
+            selectedAnimal = animal;
+            
+            document.querySelectorAll('.animal-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            event.target.classList.add('selected');
+            document.getElementById('step3Btn').disabled = false;
+        }
+        
+        // 第三关验证
+        async function verifyStep3() {
+            if (!selectedAnimal) {
+                showMessage('step3Message', '请选择一个动物', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/admin/step3', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ animal: selectedAnimal })
+                });
+                
+                const data = await response.json();
+                hideLoading();
+                
+                if (data.success) {
+                    adminToken = data.token;
+                    localStorage.setItem('adminToken', adminToken);
+                    showMessage('step3Message', '✅ 所有验证通过！正在进入后台...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'admin-panel.html';
+                    }, 1500);
+                } else {
+                    showMessage('step3Message', `❌ ${data.error}`, 'error');
+                }
+            } catch (error) {
+                hideLoading();
+                showMessage('step3Message', '❌ 网络错误', 'error');
+            }
+        }
+        
+        // 步骤跳转
+        function goToStep2() {
+            currentStep = 2;
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step2').classList.add('active');
+            document.getElementById('progressFill').style.width = '33%';
+            
+            document.getElementById('step1Content').classList.remove('active');
+            document.getElementById('step2Content').classList.add('active');
+        }
+        
+        function goToStep3() {
+            currentStep = 3;
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step2').classList.add('completed');
+            document.getElementById('step3').classList.add('active');
+            document.getElementById('progressFill').style.width = '66%';
+            
+            document.getElementById('step2Content').classList.remove('active');
+            document.getElementById('step3Content').classList.add('active');
+        }
+        
+        // 工具函数
+        function showMessage(elementId, text, type) {
+            const el = document.getElementById(elementId);
+            el.textContent = text;
+            el.className = `message ${type}`;
+            el.style.display = 'block';
+            
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showLoading() {
+            document.querySelector('.login-box').style.opacity = '0.7';
+            document.getElementById('loading').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            document.querySelector('.login-box').style.opacity = '1';
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
