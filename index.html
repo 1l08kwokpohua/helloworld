@@ -597,6 +597,49 @@ tailwind.config = {
   }
 </style>
 </head>
+<!-- 公告模态框 -->
+<div id="announcementModal" class="modal-overlay" style="z-index: 10000;">
+    <div class="modal-content" style="max-width: 500px; text-align: center;">
+        <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 1rem 1rem 0 0; margin: -2rem -2rem 1rem -2rem;">
+            <span style="font-size: 48px;">📢</span>
+            <h2 style="font-size: 24px; margin: 10px 0 5px;">系统公告</h2>
+        </div>
+        
+        <div style="padding: 10px 0 20px;">
+            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 15px;">
+                欢迎来到<strong>数学挑战大师</strong>！🎉
+            </p>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px; text-align: left;">
+                ⚠️ 控分检测系统已上线<br>
+                📐 包含算术、几何、应用题、逻辑推理、奥数<br>
+                🏆 诚信答题，公平竞争<br>
+                💡 答对难题有庆祝特效<br>
+                🚨 作弊行为将被检测并记录
+            </p>
+            
+            <!-- 不再弹出选项 -->
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-size: 13px; color: #666; cursor: pointer;">
+                    <input type="checkbox" id="dontShowAgain" style="margin-right: 8px; cursor: pointer;">
+                    不再自动弹出此公告
+                </label>
+            </div>
+            
+            <button onclick="closeAnnouncementModal(true)" style="background: linear-gradient(135deg, #5D5CDE, #4338CA); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s;">
+                开始挑战 🚀
+            </button>
+        </div>
+        
+        <button onclick="closeAnnouncementModal(true)" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: white; opacity: 0.7;">&times;</button>
+    </div>
+</div>
+
+<!-- 顶部小按钮 - 放在语言选择器旁边 -->
+<div style="position: fixed; top: 4px; right: 100px; z-index: 50;">
+    <button onclick="showAnnouncementModal()" style="background: rgba(0,0,0,0.5); border: none; color: white; font-size: 12px; padding: 4px 8px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(5px);">
+        📢 公告
+    </button>
+</div>
 <body class="math-container">
 <!-- 开始界面 -->
 <div id="startScreen" class="min-h-screen flex items-center justify-center p-6">
@@ -919,6 +962,57 @@ tailwind.config = {
     Hubert团队制作 | © 2026 数学挑战大师 | 郭宝桦保留所有权利
 </div>
 <script>
+  // 检查是否永久不再弹出
+    function shouldShowAnnouncement() {
+        const neverShow = localStorage.getItem('announcementNeverShow');
+        return neverShow !== 'true';
+    }
+    
+    // 保存用户选择
+    function setNeverShow(value) {
+        if (value) {
+            localStorage.setItem('announcementNeverShow', 'true');
+        } else {
+            localStorage.removeItem('announcementNeverShow');
+        }
+    }
+    
+    // 显示公告
+    function showAnnouncementModal() {
+        const modal = document.getElementById('announcementModal');
+        if (modal) {
+            modal.classList.add('show');
+        }
+    }
+    
+    // 关闭公告
+    function closeAnnouncementModal(savePreference = false) {
+        const modal = document.getElementById('announcementModal');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+        
+        // 如果用户勾选了“不再弹出”，保存设置
+        if (savePreference) {
+            const checkbox = document.getElementById('dontShowAgain');
+            if (checkbox && checkbox.checked) {
+                setNeverShow(true);
+            }
+        }
+    }
+    
+    // 页面加载时决定是否自动弹出
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            if (shouldShowAnnouncement()) {
+                showAnnouncementModal();
+            }
+        });
+    } else {
+        if (shouldShowAnnouncement()) {
+            showAnnouncementModal();
+        }
+    }
   let currentQuestion = 0,
     correctAnswers = 0,
     wrongAnswers = 0,
